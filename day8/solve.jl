@@ -50,7 +50,6 @@ function solve2(inputs)
         if ins == "acc"
             acc += val
             i += 1
-            continue
         elseif ins == "jmp"
             res = _solve_from(inputs, i + 1, acc, seen)
             !isnothing(res) && (return res)
