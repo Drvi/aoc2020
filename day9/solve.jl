@@ -17,7 +17,7 @@ function solve1(inputs)
         !found && (return x)
 
         delete!(rolling_set, inputs[i-25])
-        push!(rolling_set, inputs[i])
+        push!(rolling_set, x)
         i += 1
     end
     throw(error("No invalid number found"))
@@ -25,12 +25,12 @@ end
 
 function solve2(inputs, N)
     i = 1
-    j = 2
-    s = inputs[i] + inputs[j]
+    j = 1
+    s = inputs[i]
     @inbounds while j <= length(inputs)
         if s == N
             return sum(extrema(inputs[i:j]))
-        elseif s < N
+        elseif s < N || i == j
             j += 1
             s += inputs[j]
         else
@@ -40,6 +40,7 @@ function solve2(inputs, N)
     end
     throw(error("No sequence summed up to $N"))
 end
+
 
 N = solve1(inputs);
 println(N)
