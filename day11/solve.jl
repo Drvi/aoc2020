@@ -55,7 +55,7 @@ function _serchdirected(start, direction, inputs)
     m, n = size(inputs)
     di, dj = direction
     i, j = start .+ direction
-    while 1 <= i <= m && 1 <= j <= n
+    @inbounds while 1 <= i <= m && 1 <= j <= n
         inputs[i, j] != 0 && (return (i + (j - 1) * m))
         i += di
         j += dj
