@@ -56,46 +56,39 @@ function _serchdirected(start, direction, inputs)
     di, dj = direction
     i, j = start .+ direction
     while 1 <= i <= m && 1 <= j <= n
-        inputs[i, j] != 0 && (return (i, j))
+        inputs[i, j] != 0 && (return (i + (j - 1) * m))
         i += di
         j += dj
     end
 end
 
 function create_index(inputs::Matrix{T}) where {T}
-    directions = NTuple{8,Tuple{T,T}}(
-        ((0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (-1, -1), (-1, 1), (1, -1))
+    directions = (
+        ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
     )
     m, n = size(inputs)
-    zero_coord = let f = findfirst(==(0), inputs)
+    zero_index = let f = findfirst(==(0), inputs)
         f[1] + (f[2] - 1) * m
     end
 
-    visible_neighbors = -ones(T, n * m, 9)
-    visible_neighbors[:, 5] .= T(8)
+    visible_neighbors = -ones(T, 8, n * m)
     @inbounds for i = 1:m
         for j = 1:n
             linear_index = T(i + (j - 1) * m)
-            x = inputs[i, j]
-            neighbor_buffer = @view visible_neighbors[linear_index, :]
-            if (x == 0 || neighbor_buffer[5] == 0)
-                zero_coord = i + (j - 1) * m
+            if inputs[linear_index] == 0
+                zero_index = linear_index
                 continue
             end
-            for (di, dj) in directions
-                rel_idx = 2 + di + (1 + dj) * 3
-                neighbor_buffer[rel_idx] != -1 && continue
-                other_loc = _serchdirected((i, j), (di, dj), inputs)
-                neighbor_buffer[5] -= 1
-                if !isnothing(other_loc)
-                    I, J = other_loc
-                    other_linear_index = T(I + (J - 1) * m)
-                    neighbor_buffer[rel_idx] = other_linear_index
-                    other_buffer = @view visible_neighbors[other_linear_index, :]
-                    other_buffer[2-di+(1-dj)*3] = linear_index
-                    other_buffer[5] -= 1
+            neighbor_buffer = @view visible_neighbors[:, linear_index]
+            for (k, d) in enumerate(directions)
+                neighbor_buffer[k] != -1 && continue
+                other_linear_index = _serchdirected((i, j), d, inputs)
+                if !isnothing(other_linear_index)
+                    neighbor_buffer[k] = T(other_linear_index)
+                    other_buffer = @view visible_neighbors[:, other_linear_index]
+                    other_buffer[9-k] = linear_index
                 else
-                    neighbor_buffer[rel_idx] = zero_coord
+                    neighbor_buffer[k] = zero_index
                 end
             end
         end
@@ -105,8 +98,7 @@ function create_index(inputs::Matrix{T}) where {T}
     j = 1
     @inbounds for i = 1:m*n
         inputs[i] == 0 && continue
-        lc = @view visible_neighbors[i, :]
-        out[j] = SeatPosition(T(i), lc[[1, 2, 3, 4, 6, 7, 8, 9]])
+        out[j] = SeatPosition(T(i), visible_neighbors[:, i])
         j += 1
     end
     out
