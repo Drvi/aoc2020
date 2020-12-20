@@ -56,7 +56,7 @@ function solve2(inputs)
         end
     end
 
-    mapping = Dict{Int, String}()
+    mapping = Dict{Int,String}()
     for (k, cs) in sort!(collect(freqs), by = x -> sum(x[2]))
         idx = [i for (i, c) in enumerate(cs) if c == n_valid && !(i in keys(mapping))]
         mapping[idx[1]] = k
